@@ -1,15 +1,14 @@
 package com.danielvandenbrink.corena.server;
 
-import com.danielvandenbrink.corena.commands.ConnectCommand;
-import com.danielvandenbrink.corena.commands.DisconnectCommand;
-import com.danielvandenbrink.corena.commands.InputCommand;
+import com.danielvandenbrink.corena.commands.*;
 import com.danielvandenbrink.corena.communication.Command;
 import com.danielvandenbrink.corena.communication.CommandCommunicator;
 import com.danielvandenbrink.corena.communication.CommandHandlerRegistry;
 import com.danielvandenbrink.corena.communication.CommandParser;
 import com.danielvandenbrink.corena.server.handlers.ConnectCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.DisconnectCommandHandler;
-import com.danielvandenbrink.corena.server.handlers.InputCommandHandler;
+import com.danielvandenbrink.corena.server.handlers.KeyboardInputCommandHandler;
+import com.danielvandenbrink.corena.server.handlers.MouseInputCommandHandler;
 import com.danielvandenbrink.corena.server.managers.PlayerManager;
 import com.danielvandenbrink.xudp.PacketEvent;
 import com.danielvandenbrink.xudp.PacketEventHandler;
@@ -19,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.security.Key;
 
 public class GameServer implements CommandCommunicator {
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -35,7 +35,8 @@ public class GameServer implements CommandCommunicator {
         commandHandlerRegistry = new CommandHandlerRegistry();
         commandHandlerRegistry.register(ConnectCommand.class, new ConnectCommandHandler(this, playerManager));
         commandHandlerRegistry.register(DisconnectCommand.class, new DisconnectCommandHandler(this, playerManager));
-        commandHandlerRegistry.register(InputCommand.class, new InputCommandHandler(this, playerManager));
+        commandHandlerRegistry.register(KeyboardInputCommand.class, new KeyboardInputCommandHandler(this, playerManager));
+        commandHandlerRegistry.register(MouseInputCommand.class, new MouseInputCommandHandler(this, playerManager));
 
         server = new UdpServer();
         server.onPacket(new PacketEventHandler() {

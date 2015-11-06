@@ -11,9 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.danielvandenbrink.corena.client.EntityManager;
 import com.danielvandenbrink.corena.client.GameClient;
 import com.danielvandenbrink.corena.client.Renderer;
-import com.danielvandenbrink.corena.commands.ConnectCommand;
-import com.danielvandenbrink.corena.commands.DisconnectCommand;
-import com.danielvandenbrink.corena.commands.InputCommand;
+import com.danielvandenbrink.corena.commands.*;
 import com.danielvandenbrink.corena.server.GameServer;
 
 public class GameScreen implements Screen {
@@ -92,17 +90,34 @@ public class GameScreen implements Screen {
     }
 
     private void handleInput() {
+        // Touch
+        boolean firstFingerTouching = Gdx.input.isTouched(0);
+        if (firstFingerTouching) {
+            int firstFingerX = Gdx.input.getX();
+            int firstFingerY = Gdx.input.getY();
+            client.send(new MouseInputCommand(client.uuid(), firstFingerX, firstFingerY));
+        }
+
+        // Mouse
+        boolean leftPressed = Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+        if (leftPressed) {
+            int mouseX = Gdx.input.getX();
+            int mouseY = Gdx.input.getY();
+            client.send(new MouseInputCommand(client.uuid(), mouseX, mouseY));
+        }
+
+        // Keyboard
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            client.send(new InputCommand(client.uuid(), Input.Keys.W));
+            client.send(new KeyboardInputCommand(client.uuid(), Input.Keys.W));
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            client.send(new InputCommand(client.uuid(), Input.Keys.A));
+            client.send(new KeyboardInputCommand(client.uuid(), Input.Keys.A));
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            client.send(new InputCommand(client.uuid(), Input.Keys.S));
+            client.send(new KeyboardInputCommand(client.uuid(), Input.Keys.S));
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            client.send(new InputCommand(client.uuid(), Input.Keys.D));
+            client.send(new KeyboardInputCommand(client.uuid(), Input.Keys.D));
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {

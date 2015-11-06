@@ -1,5 +1,7 @@
 package com.danielvandenbrink.corena.util;
 
+import java.nio.ByteBuffer;
+
 public final class Convert {
     private Convert() {
     }
@@ -50,6 +52,17 @@ public final class Convert {
             bytes[i + offset] = (byte) (l >> (i * 8));
         }
         return bytes;
+    }
+
+    public static byte[] floatToByteArray(final float f) {
+        return ByteBuffer.allocate(4).putFloat(f).array();
+    }
+
+    public static byte[] floatToByteArray(final float f, final byte[] bytes, final int offset) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        bb.position(offset);
+        bb.putFloat(f);
+        return bb.array();
     }
 
     public static short byteArrayToShort(final byte[] bytes) {
@@ -104,5 +117,17 @@ public final class Convert {
             l |= (bytes[i + offset] & 0xFF) << (i << 3);
         }
         return l;
+    }
+
+    public static float byteArrayToFloat(final byte[] bytes)
+    {
+        return ByteBuffer.wrap(bytes).getFloat();
+    }
+
+    public static float byteArrayToFloat(final byte[] bytes, final int offset)
+    {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        bb.position(offset);
+        return bb.getFloat();
     }
 }

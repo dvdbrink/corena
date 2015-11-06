@@ -7,8 +7,8 @@ public class Player {
     private final SocketAddress address;
     private final String name;
 
-    private int x;
-    private int y;
+    private float x;
+    private float y;
 
     public Player(final long uuid, final SocketAddress address, final String name) {
         this.uuid = uuid;
@@ -20,19 +20,19 @@ public class Player {
         return uuid;
     }
 
-    public int x() {
+    public float x() {
         return x;
     }
 
-    public void x(int x) {
+    public void x(float x) {
         this.x = x;
     }
 
-    public int y() {
+    public float y() {
         return y;
     }
 
-    public void y(int y) {
+    public void y(float y) {
         this.y = y;
     }
 

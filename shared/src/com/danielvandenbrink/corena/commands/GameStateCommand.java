@@ -41,10 +41,10 @@ public class GameStateCommand implements Command {
             Convert.longToByteArray(entity.uuid(), bytes, offset);
             offset += 8;
 
-            Convert.intToByteArray(entity.x(), bytes, offset);
+            Convert.floatToByteArray(entity.x(), bytes, offset);
             offset += 4;
 
-            Convert.intToByteArray(entity.y(), bytes, offset);
+            Convert.floatToByteArray(entity.y(), bytes, offset);
             offset += 4;
         }
         return bytes;
@@ -63,10 +63,10 @@ public class GameStateCommand implements Command {
             final long uuid = Convert.byteArrayToLong(bytes, offset);
             offset += 8;
 
-            final int x = Convert.byteArrayToInt(bytes, offset);
+            final float x = Convert.byteArrayToFloat(bytes, offset);
             offset += 4;
 
-            final int y = Convert.byteArrayToInt(bytes, offset);
+            final float y = Convert.byteArrayToFloat(bytes, offset);
             offset += 4;
 
             entities.add(new GameObject(uuid, x, y));

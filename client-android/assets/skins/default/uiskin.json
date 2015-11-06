@@ -61,12 +61,6 @@
   com.badlogic.gdx.scenes.scene2d.ui.Tree$TreeStyle: {
     default: { minus: tree-minus, plus: tree-plus, selection: default-select-selection }
   },
-  com.badlogic.gdx.scenes.scene2d.ui.Tooltip$TooltipStyle: {
-    default: {
-      label: { font: default-font, fontColor: white },
-      background: default-pane
-    }
-  },
   com.badlogic.gdx.scenes.scene2d.ui.ProgressBar$ProgressBarStyle: {
     default: { knobBefore: default-rect-down, knobAfter: default-rect }
   }

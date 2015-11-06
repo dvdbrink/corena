@@ -33,10 +33,8 @@ public class Renderer implements Disposable {
         batch.begin();
         batch.setProjectionMatrix(camera.combined);
 
-        synchronized (entityManager) {
-            for (final GameObject entity : entityManager) {
-                batch.draw(playerTexture, entity.x(), entity.y());
-            }
+        for (final GameObject entity : entityManager) {
+            batch.draw(playerTexture, entity.x(), entity.y());
         }
 
         batch.end();

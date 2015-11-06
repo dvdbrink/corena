@@ -46,9 +46,10 @@ public class CommandParser {
         Map<Class<? extends Command>, Integer> map = new HashMap<>();
         map.put(ConnectCommand.class, 0);
         map.put(DisconnectCommand.class, 1);
-        map.put(InputCommand.class, 2);
+        map.put(KeyboardInputCommand.class, 2);
         map.put(GameStateCommand.class, 3);
         map.put(AuthorizedCommand.class, 4);
+        map.put(MouseInputCommand.class, 5);
 
         COMMAND_IDS = Collections.unmodifiableMap(map);
         COMMAND_TYPES = Collections.unmodifiableMap(invert(map));
