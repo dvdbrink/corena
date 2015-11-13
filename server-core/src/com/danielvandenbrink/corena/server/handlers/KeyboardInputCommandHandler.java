@@ -20,9 +20,6 @@ public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInput
     private final CommandCommunicator comm;
     private final PlayerManager playerManager;
 
-    private int x = 0;
-    private int y = 0;
-
     public KeyboardInputCommandHandler(CommandCommunicator comm, PlayerManager playerManager) {
         this.comm = comm;
         this.playerManager = playerManager;
@@ -31,14 +28,27 @@ public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInput
     @Override
     public void handle(KeyboardInputCommand command, SocketAddress address) {
         final Player player = playerManager.get(command.uuid());
+
         if (player != null) {
-            switch (command.keycode()) {
-                case W: player.y(player.y() + SPEED); break;
-                case A: player.x(player.x() - SPEED); break;
-                case S: player.y(player.y() - SPEED); break;
-                case D: player.x(player.x() + SPEED); break;
-                default: return;
+            for (int key : command.keys()) {
+                switch (key) {
+                    case W:
+                        player.y(player.y() + SPEED);
+                        break;
+                    case A:
+                        player.x(player.x() - SPEED);
+                        break;
+                    case S:
+                        player.y(player.y() - SPEED);
+                        break;
+                    case D:
+                        player.x(player.x() + SPEED);
+                        break;
+                    default:
+                        return;
+                }
             }
+
             comm.send(new GameStateCommand(playerManager.entities()));
         }
     }

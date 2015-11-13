@@ -4,10 +4,10 @@ import com.danielvandenbrink.corena.GameObject;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 public class EntityManager implements Iterable<GameObject> {
-    private final Map<Long, GameObject> entities = new ConcurrentHashMap<>();
+    private final Map<Long, GameObject> entities = new HashMap<>();
 
     public EntityManager() {
 
