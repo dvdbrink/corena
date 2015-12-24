@@ -5,7 +5,8 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.danielvandenbrink.corena.client.EntityManager;
+import com.danielvandenbrink.corena.Action;
+import com.danielvandenbrink.corena.client.GameObjectManager;
 import com.danielvandenbrink.corena.client.Renderer;
 import com.danielvandenbrink.corena.client.handlers.GameStateCommandHandler;
 import com.danielvandenbrink.corena.commands.*;
@@ -16,8 +17,6 @@ import com.danielvandenbrink.corena.communication.CommandParser;
 import com.danielvandenbrink.corena.server.GameServer;
 import com.danielvandenbrink.xudp.PacketEvent;
 import com.danielvandenbrink.xudp.impl.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -25,23 +24,20 @@ import java.net.SocketAddress;
 public class GameScreen implements Screen, InputProcessor {
     public static final String LOOPBACK_ADDRESS = "127.0.0.1";
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
     private final Game game;
 
     private CommandParser commandParser;
     private CommandHandlerRegistry commandHandlerRegistry;
     private UdpSocket<UdpPacket> socket;
-
-    private EntityManager entityManager;
+    private GameObjectManager gameObjectManager;
     private Renderer renderer;
-    private GameServer server;
 
     private long uuid = -1;
 
     public GameScreen(final Game game, final String name, final int port) {
         this.game = game;
 
-        server = new GameServer(port);
+        new Thread(new GameServer(port)).start();
 
         init(name, LOOPBACK_ADDRESS, port);
     }
@@ -53,16 +49,15 @@ public class GameScreen implements Screen, InputProcessor {
     }
 
     private void init(final String name, final String ip, final int port) {
-        entityManager = new EntityManager();
+        gameObjectManager = new GameObjectManager();
 
         final Batch batch = new SpriteBatch();
         final Camera camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        renderer = new Renderer(batch, camera, entityManager);
+        renderer = new Renderer(batch, camera, gameObjectManager);
 
         commandParser = new CommandParser();
-
         commandHandlerRegistry = new CommandHandlerRegistry();
-        commandHandlerRegistry.register(GameStateCommand.class, new GameStateCommandHandler(entityManager));
+        commandHandlerRegistry.register(GameStateCommand.class, new GameStateCommandHandler(gameObjectManager));
         commandHandlerRegistry.register(AuthorizedCommand.class, new CommandHandler<AuthorizedCommand>() {
             @Override
             public void handle(AuthorizedCommand command, SocketAddress address) {
@@ -154,16 +149,19 @@ public class GameScreen implements Screen, InputProcessor {
         // Keyboard
         KeyboardInputCommand kic = new KeyboardInputCommand(uuid);
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            kic.add(Input.Keys.W);
+            kic.add(Action.FORWARD);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            kic.add(Input.Keys.A);
+            kic.add(Action.LEFT);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            kic.add(Input.Keys.S);
+            kic.add(Action.BACKWARD);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            kic.add(Input.Keys.D);
+            kic.add(Action.RIGHT);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            kic.add(Action.SHOOT);
         }
         if (kic.keys().size() > 0) {
             send(kic);

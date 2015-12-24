@@ -11,7 +11,7 @@ public class DesktopLauncher {
 		if (args.length > 0) {
 			try {
 				final int port = Integer.parseInt(args[0]);
-				new GameServer(port);
+				new Thread(new GameServer(port)).start();
 			} catch (NumberFormatException e) {
 				log.error("Invalid port: {}", args[0]);
 			}

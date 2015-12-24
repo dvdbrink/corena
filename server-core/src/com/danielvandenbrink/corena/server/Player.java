@@ -1,5 +1,7 @@
 package com.danielvandenbrink.corena.server;
 
+import com.danielvandenbrink.corena.Vector2f;
+
 import java.net.SocketAddress;
 
 public class Player {
@@ -9,6 +11,7 @@ public class Player {
 
     private float x;
     private float y;
+    private float rotation;
 
     public Player(final long uuid, final SocketAddress address, final String name) {
         this.uuid = uuid;
@@ -34,6 +37,26 @@ public class Player {
 
     public void y(float y) {
         this.y = y;
+    }
+
+    public float rotation() {
+        return rotation;
+    }
+
+    public Vector2f direction() {
+        final float x = (float) Math.cos(Math.toRadians(rotation));
+        final float y = (float) Math.sin(Math.toRadians(rotation));
+
+        Vector2f direction = new Vector2f(x, y);
+        if (direction.length() > 0) {
+            direction.normalise();
+        }
+
+        return direction;
+    }
+
+    public void rotation(float rotation) {
+        this.rotation = rotation;
     }
 
     public SocketAddress address() {

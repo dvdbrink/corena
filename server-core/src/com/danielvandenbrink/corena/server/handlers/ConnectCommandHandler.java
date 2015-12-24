@@ -6,7 +6,7 @@ import com.danielvandenbrink.corena.commands.GameStateCommand;
 import com.danielvandenbrink.corena.communication.CommandCommunicator;
 import com.danielvandenbrink.corena.communication.CommandHandler;
 import com.danielvandenbrink.corena.server.Player;
-import com.danielvandenbrink.corena.server.managers.PlayerManager;
+import com.danielvandenbrink.corena.server.PlayerManager;
 
 import java.net.SocketAddress;
 

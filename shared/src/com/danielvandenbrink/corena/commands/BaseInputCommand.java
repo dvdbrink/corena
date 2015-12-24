@@ -1,8 +1,6 @@
 package com.danielvandenbrink.corena.commands;
 
 import com.danielvandenbrink.corena.communication.Command;
-import com.danielvandenbrink.corena.communication.CommandException;
-import com.danielvandenbrink.corena.util.Convert;
 import com.danielvandenbrink.xudp.Protocol;
 
 public abstract class BaseInputCommand implements Command {

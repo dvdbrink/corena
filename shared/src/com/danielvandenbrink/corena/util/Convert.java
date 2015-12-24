@@ -119,13 +119,11 @@ public final class Convert {
         return l;
     }
 
-    public static float byteArrayToFloat(final byte[] bytes)
-    {
+    public static float byteArrayToFloat(final byte[] bytes) {
         return ByteBuffer.wrap(bytes).getFloat();
     }
 
-    public static float byteArrayToFloat(final byte[] bytes, final int offset)
-    {
+    public static float byteArrayToFloat(final byte[] bytes, final int offset) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         bb.position(offset);
         return bb.getFloat();

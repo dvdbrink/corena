@@ -1,21 +1,18 @@
 package com.danielvandenbrink.corena.server.handlers;
 
+import com.danielvandenbrink.corena.Action;
 import com.danielvandenbrink.corena.commands.GameStateCommand;
 import com.danielvandenbrink.corena.commands.KeyboardInputCommand;
-import com.danielvandenbrink.corena.commands.MouseInputCommand;
 import com.danielvandenbrink.corena.communication.CommandCommunicator;
 import com.danielvandenbrink.corena.communication.CommandHandler;
 import com.danielvandenbrink.corena.server.Player;
-import com.danielvandenbrink.corena.server.managers.PlayerManager;
+import com.danielvandenbrink.corena.server.PlayerManager;
 
 import java.net.SocketAddress;
 
 public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInputCommand> {
-    private static final int W = 51;
-    private static final int A = 29;
-    private static final int S = 47;
-    private static final int D = 32;
-    private static final int SPEED = 15;
+    private static final float SPEED = 6f;
+    private static final float ROT_SPEED = 4f;
 
     private final CommandCommunicator comm;
     private final PlayerManager playerManager;
@@ -30,26 +27,33 @@ public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInput
         final Player player = playerManager.get(command.uuid());
 
         if (player != null) {
-            for (int key : command.keys()) {
-                switch (key) {
-                    case W:
-                        player.y(player.y() + SPEED);
+            for (Action action : command.keys()) {
+                switch (action) {
+                    case FORWARD:
+                        player.x(player.x() - (player.direction().x() * SPEED));
+                        player.y(player.y() - (player.direction().y() * SPEED));
                         break;
-                    case A:
-                        player.x(player.x() - SPEED);
+                    case LEFT:
+                        player.rotation(player.rotation() + ROT_SPEED);
                         break;
-                    case S:
-                        player.y(player.y() - SPEED);
+                    case BACKWARD:
+                        player.x(player.x() + (player.direction().x() * SPEED));
+                        player.y(player.y() + (player.direction().y() * SPEED));
                         break;
-                    case D:
-                        player.x(player.x() + SPEED);
+                    case RIGHT:
+                        player.rotation(player.rotation() - ROT_SPEED);
+                        break;
+                    case SHOOT:
                         break;
                     default:
                         return;
                 }
             }
 
-            comm.send(new GameStateCommand(playerManager.entities()));
+            playerManager.dirty(true);
+
+            //System.out.println("Sending gamestate");
+            //comm.send(new GameStateCommand(playerManager.entities()));
         }
     }
 }

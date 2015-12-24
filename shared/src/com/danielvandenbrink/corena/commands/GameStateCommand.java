@@ -10,18 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameStateCommand implements Command {
-    private List<GameObject> entities;
+    private final List<GameObject> objects;
 
     public GameStateCommand() {
-
+        objects = new ArrayList<>();
     }
 
-    public GameStateCommand(final List<GameObject> entities) {
-        this.entities = entities;
+    public GameStateCommand(final List<GameObject> objects) {
+        this.objects = objects;
     }
 
-    public List<GameObject> entities() {
-        return entities;
+    public List<GameObject> objects() {
+        return objects;
     }
 
     @Override
@@ -31,37 +31,58 @@ public class GameStateCommand implements Command {
 
     @Override
     public byte[] toBytes() {
-        final byte[] bytes = new byte[4 + (entities.size() * 16)];
+        final byte[] bytes = new byte[4 + (objects.size() * (32 + 16))]; // FIXME
         int offset = 0;
 
-        Convert.intToByteArray(entities.size(), bytes, offset);
+        Convert.intToByteArray(objects.size(), bytes, offset);
         offset += 4;
 
-        for (final GameObject entity : entities) {
-            Convert.longToByteArray(entity.uuid(), bytes, offset);
+        for (final GameObject obj : objects) {
+            Convert.longToByteArray(obj.uuid(), bytes, offset);
             offset += 8;
 
-            Convert.floatToByteArray(entity.x(), bytes, offset);
+            Convert.intToByteArray(obj.textureName().length(), bytes, offset);
             offset += 4;
 
-            Convert.floatToByteArray(entity.y(), bytes, offset);
+            byte[] spriteBytes = obj.textureName().getBytes();
+            System.arraycopy(spriteBytes, 0, bytes, offset, spriteBytes.length);
+            offset += 16; // FIXME
+
+            Convert.floatToByteArray(obj.x(), bytes, offset);
+            offset += 4;
+
+            Convert.floatToByteArray(obj.y(), bytes, offset);
+            offset += 4;
+
+            Convert.floatToByteArray(obj.scaleX(), bytes, offset);
+            offset += 4;
+
+            Convert.floatToByteArray(obj.scaleY(), bytes, offset);
+            offset += 4;
+
+            Convert.floatToByteArray(obj.rotation(), bytes, offset);
             offset += 4;
         }
+
         return bytes;
     }
 
     @Override
     public void fromBytes(byte[] bytes) throws CommandException {
-        entities = new ArrayList<>();
-
         int offset = 0;
 
-        final int entityCount = Convert.byteArrayToInt(bytes, offset);
+        final int objCount = Convert.byteArrayToInt(bytes, offset);
         offset += 4;
 
-        for (int i = 0; i < entityCount; ++i) {
+        for (int i = 0; i < objCount; ++i) {
             final long uuid = Convert.byteArrayToLong(bytes, offset);
             offset += 8;
+
+            final int textureNameLength = Convert.byteArrayToInt(bytes, offset);
+            offset += 4;
+
+            final String textureName = new String(bytes, offset, textureNameLength);
+            offset += textureNameLength;
 
             final float x = Convert.byteArrayToFloat(bytes, offset);
             offset += 4;
@@ -69,7 +90,16 @@ public class GameStateCommand implements Command {
             final float y = Convert.byteArrayToFloat(bytes, offset);
             offset += 4;
 
-            entities.add(new GameObject(uuid, x, y));
+            final float scaleX = Convert.byteArrayToFloat(bytes, offset);
+            offset += 4;
+
+            final float scaleY = Convert.byteArrayToFloat(bytes, offset);
+            offset += 4;
+
+            final float rotation = Convert.byteArrayToFloat(bytes, offset);
+            offset += 4;
+
+            objects.add(new GameObject(uuid, textureName, x, y, scaleX, scaleY, rotation));
         }
     }
 }
