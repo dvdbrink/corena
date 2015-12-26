@@ -15,9 +15,14 @@ public class DesktopLauncher {
 
         Graphics.DisplayMode displayMode = LwjglApplicationConfiguration.getDesktopDisplayMode();
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+
 		config.width = displayMode.width / 2;
 		config.height = displayMode.height / 2;
         //config.fullscreen = true;
+
+		config.backgroundFPS = 120;
+		config.foregroundFPS = 120;
+        config.vSyncEnabled = false;
 
 		new LwjglApplication(new Corena(), config);
 	}

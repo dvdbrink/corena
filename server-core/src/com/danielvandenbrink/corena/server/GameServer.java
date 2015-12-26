@@ -1,6 +1,5 @@
 package com.danielvandenbrink.corena.server;
 
-import com.badlogic.ashley.core.Engine;
 import com.danielvandenbrink.corena.commands.*;
 import com.danielvandenbrink.corena.communication.Command;
 import com.danielvandenbrink.corena.communication.CommandCommunicator;
@@ -10,21 +9,23 @@ import com.danielvandenbrink.corena.server.handlers.ConnectCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.DisconnectCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.KeyboardInputCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.MouseInputCommandHandler;
+import com.danielvandenbrink.corena.server.systems.FrictionSystem;
+import com.danielvandenbrink.corena.server.systems.MovementSystem;
+import com.danielvandenbrink.corena.util.Time;
 import com.danielvandenbrink.xudp.PacketEvent;
 import com.danielvandenbrink.xudp.impl.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class GameServer implements CommandCommunicator, Runnable {
-    public static final int TICKS_PER_SECOND = 120;
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final PlayerManager playerManager;
-    private final Engine engine;
+    private final World world;
+    private final EntityFactory entityFactory;
     private final CommandParser commandParser;
     private final CommandHandlerRegistry commandHandlerRegistry;
     private final UdpSocket<UdpPacket> socket;
@@ -33,15 +34,10 @@ public class GameServer implements CommandCommunicator, Runnable {
 
     public GameServer(final int port) {
         playerManager = new PlayerManager();
-        engine = new Engine();
-
+        world = new World();
+        entityFactory = new EntityFactory();
         commandParser = new CommandParser();
         commandHandlerRegistry = new CommandHandlerRegistry();
-        commandHandlerRegistry.register(ConnectCommand.class, new ConnectCommandHandler(this, playerManager));
-        commandHandlerRegistry.register(DisconnectCommand.class, new DisconnectCommandHandler(this, playerManager));
-        commandHandlerRegistry.register(KeyboardInputCommand.class, new KeyboardInputCommandHandler(this, playerManager));
-        commandHandlerRegistry.register(MouseInputCommand.class, new MouseInputCommandHandler(this, playerManager));
-
         socket = new UdpSocket<UdpPacket>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
                 new SelectorFactory(), new DatagramChannelFactory(), new UdpPacketFactory(),
                 new UdpPacketEventFactory()) {
@@ -51,10 +47,12 @@ public class GameServer implements CommandCommunicator, Runnable {
                 commandHandlerRegistry.dispatch(cmd, e.from());
             }
         };
-        socket.open();
-        socket.bind(new InetSocketAddress(port));
 
         running = false;
+
+        registerSystems();
+        registerCommandHandlers();
+        initSocket(port);
     }
 
     @Override
@@ -69,32 +67,53 @@ public class GameServer implements CommandCommunicator, Runnable {
         socket.send(command.protocol(), commandParser.encode(command), to);
     }
 
-    private void tick() {
-        socket.read();
-
-        if (playerManager.dirty()) {
-            send(new GameStateCommand(playerManager.entities()));
-            playerManager.dirty(false);
-        }
-
-        socket.write();
-    }
-
-    public void start() {
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                tick();
-            }
-        }, 0, 1000 / TICKS_PER_SECOND, TimeUnit.MILLISECONDS);
-    }
-
     @Override
     public void run() {
+        // Gaat niet goed wanneer de ticks per seconde hoger is dan de frames per seconde van de client.
+        // Maar de client zou dan 2x een game state moeten ontvanger per frame in het geval van 120TPS en 60FPS, toch?
+        // De client ontvangt echter 1 game state per frame. Waarom? <- Uitzoeken!
+        final float ticksPerSecond = 120.0f;
+        final float deltaTime = 1.0f / ticksPerSecond;
+
+        double accumulator = 0.0;
+        double previousTime = 0.0;
+
         running = true;
         while (running) {
-            tick();
+            double currentTime = Time.millis() / 1000.0;
+            double tickTime = Math.min(currentTime - previousTime, 0.25);
+            previousTime = currentTime;
+
+            accumulator += tickTime;
+
+            while (accumulator >= deltaTime) {
+                tick(deltaTime);
+                accumulator -= deltaTime;
+            }
         }
+    }
+
+    private void registerSystems() {
+        world.addSystem(new MovementSystem());
+        //world.addSystem(new FrictionSystem());
+    }
+
+    private void registerCommandHandlers() {
+        commandHandlerRegistry.register(ConnectCommand.class, new ConnectCommandHandler(this, playerManager, world, entityFactory));
+        commandHandlerRegistry.register(DisconnectCommand.class, new DisconnectCommandHandler(this, playerManager, world));
+        commandHandlerRegistry.register(KeyboardInputCommand.class, new KeyboardInputCommandHandler(playerManager, world));
+        commandHandlerRegistry.register(MouseInputCommand.class, new MouseInputCommandHandler(playerManager, world));
+    }
+
+    private void initSocket(final int port) {
+        socket.open();
+        socket.bind(new InetSocketAddress(port));
+    }
+
+    private void tick(float dt) {
+        socket.read();
+        world.update(dt);
+        send(new GameStateCommand(world.getObjects()));
+        socket.write();
     }
 }

@@ -17,6 +17,8 @@ import com.danielvandenbrink.corena.communication.CommandParser;
 import com.danielvandenbrink.corena.server.GameServer;
 import com.danielvandenbrink.xudp.PacketEvent;
 import com.danielvandenbrink.xudp.impl.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -37,7 +39,7 @@ public class GameScreen implements Screen, InputProcessor {
     public GameScreen(final Game game, final String name, final int port) {
         this.game = game;
 
-        new Thread(new GameServer(port)).start();
+        new Thread(new GameServer(port), "Corena Server").start();
 
         init(name, LOOPBACK_ADDRESS, port);
     }
@@ -93,10 +95,9 @@ public class GameScreen implements Screen, InputProcessor {
     @Override
     public void render(float delta) {
         handleInput();
-
-        socket.update();
-
+        socket.read();
         renderer.render();
+        socket.write();
     }
 
     @Override

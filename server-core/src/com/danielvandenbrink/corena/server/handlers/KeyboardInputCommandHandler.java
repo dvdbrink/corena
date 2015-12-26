@@ -1,25 +1,26 @@
 package com.danielvandenbrink.corena.server.handlers;
 
 import com.danielvandenbrink.corena.Action;
-import com.danielvandenbrink.corena.commands.GameStateCommand;
 import com.danielvandenbrink.corena.commands.KeyboardInputCommand;
-import com.danielvandenbrink.corena.communication.CommandCommunicator;
 import com.danielvandenbrink.corena.communication.CommandHandler;
 import com.danielvandenbrink.corena.server.Player;
 import com.danielvandenbrink.corena.server.PlayerManager;
+import com.danielvandenbrink.corena.server.World;
+import com.danielvandenbrink.corena.server.components.AccelerationComponent;
+import com.danielvandenbrink.corena.server.components.PositionComponent;
 
 import java.net.SocketAddress;
 
 public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInputCommand> {
-    private static final float SPEED = 6f;
-    private static final float ROT_SPEED = 4f;
-
-    private final CommandCommunicator comm;
     private final PlayerManager playerManager;
+    private final World world;
 
-    public KeyboardInputCommandHandler(CommandCommunicator comm, PlayerManager playerManager) {
-        this.comm = comm;
+    private static final float MAX_ACCEL = 2f;
+    private static final float ACCEL_INCREMENT = 0.025f;
+
+    public KeyboardInputCommandHandler(PlayerManager playerManager, World world) {
         this.playerManager = playerManager;
+        this.world = world;
     }
 
     @Override
@@ -27,21 +28,20 @@ public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInput
         final Player player = playerManager.get(command.uuid());
 
         if (player != null) {
+            AccelerationComponent acceleration = player.entity().getComponent(AccelerationComponent.class);
             for (Action action : command.keys()) {
                 switch (action) {
                     case FORWARD:
-                        player.x(player.x() - (player.direction().x() * SPEED));
-                        player.y(player.y() - (player.direction().y() * SPEED));
+                        acceleration.y = Math.min(acceleration.y + ACCEL_INCREMENT, MAX_ACCEL);
                         break;
                     case LEFT:
-                        player.rotation(player.rotation() + ROT_SPEED);
+                        acceleration.x = Math.max(acceleration.x - ACCEL_INCREMENT, -MAX_ACCEL);
                         break;
                     case BACKWARD:
-                        player.x(player.x() + (player.direction().x() * SPEED));
-                        player.y(player.y() + (player.direction().y() * SPEED));
+                        acceleration.y = Math.max(acceleration.y - ACCEL_INCREMENT, -MAX_ACCEL);
                         break;
                     case RIGHT:
-                        player.rotation(player.rotation() - ROT_SPEED);
+                        acceleration.x = Math.min(acceleration.x + ACCEL_INCREMENT, MAX_ACCEL);
                         break;
                     case SHOOT:
                         break;
@@ -50,10 +50,7 @@ public class KeyboardInputCommandHandler implements CommandHandler<KeyboardInput
                 }
             }
 
-            playerManager.dirty(true);
-
-            //System.out.println("Sending gamestate");
-            //comm.send(new GameStateCommand(playerManager.entities()));
+            world.setDirty(true);
         }
     }
 }
