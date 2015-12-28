@@ -1,8 +1,5 @@
 package com.danielvandenbrink.corena.collections;
 
-import com.danielvandenbrink.corena.Bounded;
-import com.danielvandenbrink.corena.Bounds;
-
 import java.util.ArrayList;
 import java.util.List;
 

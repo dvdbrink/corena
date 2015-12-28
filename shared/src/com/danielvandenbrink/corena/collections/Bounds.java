@@ -1,4 +1,4 @@
-package com.danielvandenbrink.corena;
+package com.danielvandenbrink.corena.collections;
 
 public class Bounds {
     public float x;

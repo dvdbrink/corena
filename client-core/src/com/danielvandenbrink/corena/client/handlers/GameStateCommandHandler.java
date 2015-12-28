@@ -4,8 +4,6 @@ import com.danielvandenbrink.corena.GameObject;
 import com.danielvandenbrink.corena.client.GameObjectManager;
 import com.danielvandenbrink.corena.commands.GameStateCommand;
 import com.danielvandenbrink.corena.communication.CommandHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 

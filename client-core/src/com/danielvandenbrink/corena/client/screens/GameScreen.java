@@ -16,9 +16,8 @@ import com.danielvandenbrink.corena.communication.CommandHandlerRegistry;
 import com.danielvandenbrink.corena.communication.CommandParser;
 import com.danielvandenbrink.corena.server.GameServer;
 import com.danielvandenbrink.xudp.PacketEvent;
+import com.danielvandenbrink.xudp.Socket;
 import com.danielvandenbrink.xudp.impl.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -30,7 +29,7 @@ public class GameScreen implements Screen, InputProcessor {
 
     private CommandParser commandParser;
     private CommandHandlerRegistry commandHandlerRegistry;
-    private UdpSocket<UdpPacket> socket;
+    private Socket socket;
     private GameObjectManager gameObjectManager;
     private Renderer renderer;
 
@@ -60,22 +59,11 @@ public class GameScreen implements Screen, InputProcessor {
         commandParser = new CommandParser();
         commandHandlerRegistry = new CommandHandlerRegistry();
         commandHandlerRegistry.register(GameStateCommand.class, new GameStateCommandHandler(gameObjectManager));
-        commandHandlerRegistry.register(AuthorizedCommand.class, new CommandHandler<AuthorizedCommand>() {
-            @Override
-            public void handle(AuthorizedCommand command, SocketAddress address) {
-                uuid = command.uuid();
-            }
-        });
+        commandHandlerRegistry.register(AuthorizedCommand.class, (command, address) -> uuid = command.uuid());
 
-        socket = new UdpSocket<UdpPacket>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
+        socket = new UdpSocket<>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
                 new SelectorFactory(), new DatagramChannelFactory(), new UdpPacketFactory(),
-                new UdpPacketEventFactory()) {
-            @Override
-            public void handlePacketEvent(PacketEvent e) {
-                Command cmd = commandParser.decode(e.packet().data());
-                commandHandlerRegistry.dispatch(cmd, e.from());
-            }
-        };
+                new UdpPacketEventFactory());
         socket.open();
         socket.connect(new InetSocketAddress(ip, port));
         send(new ConnectCommand(name));
@@ -95,8 +83,14 @@ public class GameScreen implements Screen, InputProcessor {
     @Override
     public void render(float delta) {
         handleInput();
-        socket.read();
+
+        socket.read(e -> {
+            Command cmd = commandParser.decode(e.packet().data());
+            commandHandlerRegistry.dispatch(cmd, e.from());
+        });
+
         renderer.render();
+
         socket.write();
     }
 
@@ -124,7 +118,7 @@ public class GameScreen implements Screen, InputProcessor {
     public void dispose() {
         send(new DisconnectCommand(uuid));
 
-        socket.update();
+        socket.write();
         socket.close();
 
         renderer.dispose();

@@ -7,7 +7,6 @@ import com.danielvandenbrink.corena.server.Player;
 import com.danielvandenbrink.corena.server.PlayerManager;
 import com.danielvandenbrink.corena.server.World;
 import com.danielvandenbrink.corena.server.components.AccelerationComponent;
-import com.danielvandenbrink.corena.server.components.PositionComponent;
 
 import java.net.SocketAddress;
 

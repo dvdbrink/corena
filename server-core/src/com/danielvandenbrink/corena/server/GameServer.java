@@ -9,26 +9,24 @@ import com.danielvandenbrink.corena.server.handlers.ConnectCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.DisconnectCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.KeyboardInputCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.MouseInputCommandHandler;
-import com.danielvandenbrink.corena.server.systems.FrictionSystem;
 import com.danielvandenbrink.corena.server.systems.MovementSystem;
 import com.danielvandenbrink.corena.util.Time;
 import com.danielvandenbrink.xudp.PacketEvent;
+import com.danielvandenbrink.xudp.Socket;
 import com.danielvandenbrink.xudp.impl.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class GameServer implements CommandCommunicator, Runnable {
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private static final float TICKS_PER_SECOND = 60.0f;
 
     private final PlayerManager playerManager;
     private final World world;
     private final EntityFactory entityFactory;
     private final CommandParser commandParser;
     private final CommandHandlerRegistry commandHandlerRegistry;
-    private final UdpSocket<UdpPacket> socket;
+    private final Socket socket;
 
     private boolean running;
 
@@ -38,15 +36,9 @@ public class GameServer implements CommandCommunicator, Runnable {
         entityFactory = new EntityFactory();
         commandParser = new CommandParser();
         commandHandlerRegistry = new CommandHandlerRegistry();
-        socket = new UdpSocket<UdpPacket>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
+        socket = new UdpSocket<>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
                 new SelectorFactory(), new DatagramChannelFactory(), new UdpPacketFactory(),
-                new UdpPacketEventFactory()) {
-            @Override
-            public void handlePacketEvent(PacketEvent e) {
-                Command cmd = commandParser.decode(e.packet().data());
-                commandHandlerRegistry.dispatch(cmd, e.from());
-            }
-        };
+                new UdpPacketEventFactory());
 
         running = false;
 
@@ -69,11 +61,7 @@ public class GameServer implements CommandCommunicator, Runnable {
 
     @Override
     public void run() {
-        // Gaat niet goed wanneer de ticks per seconde hoger is dan de frames per seconde van de client.
-        // Maar de client zou dan 2x een game state moeten ontvanger per frame in het geval van 120TPS en 60FPS, toch?
-        // De client ontvangt echter 1 game state per frame. Waarom? <- Uitzoeken!
-        final float ticksPerSecond = 120.0f;
-        final float deltaTime = 1.0f / ticksPerSecond;
+        final float deltaTime = 1.0f / TICKS_PER_SECOND;
 
         double accumulator = 0.0;
         double previousTime = 0.0;
@@ -95,7 +83,6 @@ public class GameServer implements CommandCommunicator, Runnable {
 
     private void registerSystems() {
         world.addSystem(new MovementSystem());
-        //world.addSystem(new FrictionSystem());
     }
 
     private void registerCommandHandlers() {
@@ -111,9 +98,15 @@ public class GameServer implements CommandCommunicator, Runnable {
     }
 
     private void tick(float dt) {
-        socket.read();
+        socket.read(e -> {
+            Command cmd = commandParser.decode(e.packet().data());
+            commandHandlerRegistry.dispatch(cmd, e.from());
+        });
+
         world.update(dt);
+
         send(new GameStateCommand(world.getObjects()));
+
         socket.write();
     }
 }

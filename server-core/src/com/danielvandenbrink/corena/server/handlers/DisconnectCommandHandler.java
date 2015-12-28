@@ -1,7 +1,6 @@
 package com.danielvandenbrink.corena.server.handlers;
 
 import com.danielvandenbrink.corena.commands.DisconnectCommand;
-import com.danielvandenbrink.corena.commands.GameStateCommand;
 import com.danielvandenbrink.corena.communication.CommandCommunicator;
 import com.danielvandenbrink.corena.communication.CommandHandler;
 import com.danielvandenbrink.corena.server.PlayerManager;
@@ -26,7 +25,5 @@ public class DisconnectCommandHandler implements CommandHandler<DisconnectComman
         world.setDirty(true);
 
         playerManager.remove(command.uuid());
-
-        comm.send(new GameStateCommand(world.getObjects()));
     }
 }

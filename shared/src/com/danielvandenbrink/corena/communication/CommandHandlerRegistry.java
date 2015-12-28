@@ -4,7 +4,7 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandHandlerRegistry {
+public final class CommandHandlerRegistry {
     private final Map<Class<? extends Command>, CommandHandler<? extends Command>> handlers = new HashMap<>();
 
     public <T extends Command> void register(final Class<T> type, final CommandHandler<T> handler) {

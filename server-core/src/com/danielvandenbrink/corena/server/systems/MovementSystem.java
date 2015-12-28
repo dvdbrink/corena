@@ -7,7 +7,6 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.danielvandenbrink.corena.server.components.AccelerationComponent;
 import com.danielvandenbrink.corena.server.components.PositionComponent;
 import com.danielvandenbrink.corena.server.components.VelocityComponent;
-import org.slf4j.LoggerFactory;
 
 public class MovementSystem extends IteratingSystem {
     private final ComponentMapper<PositionComponent> pm = ComponentMapper.getFor(PositionComponent.class);

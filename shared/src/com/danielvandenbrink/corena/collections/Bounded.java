@@ -1,4 +1,4 @@
-package com.danielvandenbrink.corena;
+package com.danielvandenbrink.corena.collections;
 
 public interface Bounded {
     Bounds bounds();
