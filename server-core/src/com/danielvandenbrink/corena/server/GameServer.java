@@ -11,11 +11,9 @@ import com.danielvandenbrink.corena.server.handlers.KeyboardInputCommandHandler;
 import com.danielvandenbrink.corena.server.handlers.MouseInputCommandHandler;
 import com.danielvandenbrink.corena.server.systems.MovementSystem;
 import com.danielvandenbrink.corena.util.Time;
-import com.danielvandenbrink.xudp.PacketEvent;
-import com.danielvandenbrink.xudp.Socket;
+import com.danielvandenbrink.xudp.Server;
 import com.danielvandenbrink.xudp.impl.*;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class GameServer implements CommandCommunicator, Runnable {
@@ -26,7 +24,7 @@ public class GameServer implements CommandCommunicator, Runnable {
     private final EntityFactory entityFactory;
     private final CommandParser commandParser;
     private final CommandHandlerRegistry commandHandlerRegistry;
-    private final Socket socket;
+    private final Server server;
 
     private boolean running;
 
@@ -36,9 +34,11 @@ public class GameServer implements CommandCommunicator, Runnable {
         entityFactory = new EntityFactory();
         commandParser = new CommandParser();
         commandHandlerRegistry = new CommandHandlerRegistry();
-        socket = new UdpSocket<>(new UdpPacketEncoder(), new UdpPacketDecoder(), new UdpPacketHandler(),
-                new SelectorFactory(), new DatagramChannelFactory(), new UdpPacketFactory(),
-                new UdpPacketEventFactory());
+        server = new Server<>(new UdpSocket(new SelectorFactory(), new DatagramChannelFactory()),
+                new UdpPacketHandler(),
+                new UdpPacketEncoder(),
+                new UdpPacketDecoder(),
+                new UdpPacketFactory());
 
         running = false;
 
@@ -56,7 +56,7 @@ public class GameServer implements CommandCommunicator, Runnable {
 
     @Override
     public void send(final Command command, final SocketAddress to) {
-        socket.send(command.protocol(), commandParser.encode(command), to);
+        server.send(command.protocol(), commandParser.encode(command), to);
     }
 
     @Override
@@ -93,12 +93,11 @@ public class GameServer implements CommandCommunicator, Runnable {
     }
 
     private void initSocket(final int port) {
-        socket.open();
-        socket.bind(new InetSocketAddress(port));
+        server.bind(port);
     }
 
     private void tick(float dt) {
-        socket.read(e -> {
+        server.read(e -> {
             Command cmd = commandParser.decode(e.packet().data());
             commandHandlerRegistry.dispatch(cmd, e.from());
         });
@@ -107,6 +106,6 @@ public class GameServer implements CommandCommunicator, Runnable {
 
         send(new GameStateCommand(world.getObjects()));
 
-        socket.write();
+        server.write();
     }
 }
